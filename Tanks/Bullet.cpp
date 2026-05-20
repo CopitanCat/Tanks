@@ -4,10 +4,11 @@ class Bullet : public sf::Drawable {
 private:
 	sf::CircleShape bulletBody;
 	sf::Vector2f coordinates = {-1,-1};
-	sf::Angle anglex, angley;
+	sf::Angle angle;
 	float radius = 5;
 	bool alive = false;
-	int bound_Count = 5;
+	int bound_Count = 3;
+	sf::Vector2f size;
 
 public:
 	// Constructors
@@ -48,14 +49,25 @@ public:
 	// Setters
 
 	void setAngle(sf::Angle angle) {
-		anglex = angle;
-		angley = angle;
+		this->angle = angle;
 	}
 
+	void setAlive(bool Alive) {
+		this->alive = Alive;
+	}
+
+	void setSize(sf::Vector2f size) {
+		this->size = size;
+	}
 	// Getters
 
 	sf::Vector2f getPosition() {
-		return bulletBody.getPosition();
+		coordinates = bulletBody.getPosition();
+		return coordinates;
+	}
+
+	float getRadius() {
+		return radius;
 	}
 
 	bool isAlive() {
@@ -71,30 +83,36 @@ public:
 	void move(float speed, bool isTouch) {
 		if (isTouch) {
 			if (bound_Count > 0) {
-				anglex = -anglex;
-				angley = -angley;
+
+				float vx = std::cos(angle.asRadians());
+				float vy = std::sin(angle.asRadians()); // was angley — now anglex
+
+				if (size.x >= size.y)
+					vy = -vy;  // horizontal wall: flip Y
+				else
+					vx = -vx;  // vertical wall: flip X
+				angle = sf::radians(std::atan2(vy, vx));
 				bound_Count--;
 			}
-			else
+			else {
 				alive = false;
+			}
 		}
-		bulletBody.move({ speed * std::cos(anglex.asRadians()), speed * std::sin(angley.asRadians()) });
-		if (bound_Count <= 0) {
-			alive = false;
-		}
-	}
-
-	void setAlive(bool Alive) {
-		this->alive = Alive;
+		bulletBody.move({
+			speed * std::cos(angle.asRadians()),
+			speed * std::sin(angle.asRadians()) // was angley
+			});
 	}
 
 
 	// Collision 
 
-	bool checkCollision(const sf::Shape& shape) {
-		return bulletBody.getGlobalBounds().findIntersection(shape.getGlobalBounds()).has_value();
+	bool checkCollision(sf::Shape* shape) {
+		if (bulletBody.getGlobalBounds().findIntersection(shape->getGlobalBounds())) {
+			return true;
+		}
+		return false;
 	}
-
 
 
 	// Draw
