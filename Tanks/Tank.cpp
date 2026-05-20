@@ -14,6 +14,9 @@ private:
 	int bulletCount = 0;
 	bool isAlive = true;
 	std::unordered_map<sf::Shape*, sf::Vector2f> Map;
+	sf::Vector2f lastPosition;
+	sf::Time BulletDuration = sf::seconds(5.f);
+	bool Alive = true;
 
 public:
 	// Constructors
@@ -140,6 +143,18 @@ public:
 		Map = map;
 	}
 
+	void setDuration_BY_Bullet(sf::Time duration) {
+		BulletDuration = duration;
+	}
+	
+	void setColor(sf::Color color) {
+		tankBody.setFillColor(color);
+	}
+
+	void setAlive(bool alive) {
+		Alive = alive;
+	}
+
 	// getters
 
 	std::vector<Bullet>& getBullets() {
@@ -154,10 +169,12 @@ public:
 	// Actions
 	void move(float speed) {
 		if (checkCollision()) {
-			tankBody.move({ speed * 2.7f *(std::cos((sf::degrees(180)-angle).asRadians())), speed * 2.7f * (std::sin(-angle.asRadians())) });
+			tankBody.setPosition({lastPosition.x +(speed/abs(speed)) * tankBody.getOrigin().x * std::cos((sf::degrees(180)-angle).asRadians()), lastPosition.y + (speed/abs(speed)) * tankBody.getOrigin().y * std::sin(-angle.asRadians()) });
 		}
-		else
-			tankBody.move({speed* std::cos(angle.asRadians()), speed * std::sin(angle.asRadians())});
+		else {
+			tankBody.move({ speed * std::cos(angle.asRadians()), speed * std::sin(angle.asRadians()) });
+			lastPosition = tankBody.getPosition();
+		}
 	}
 
 	void rotate(float angle) {
@@ -171,6 +188,7 @@ public:
 		if (bulletCount > 0) {
 			bullets.push_back(Bullet({coordinates.x + cos(angle.asRadians())*(size.x/1.5f), coordinates.y + sin(angle.asRadians())*(size.y/1.5f)}));
 			bullets.back().setAngle(angle);
+			bullets.back().setLiveTime(BulletDuration);
 			bulletCount--;
 		}
 	
@@ -202,8 +220,13 @@ public:
 	}
 
 
-	void collisionWithBullet() {
-
+	void collisionWithBullet(std::vector<Bullet> bullets) {
+		for (Bullet bullet : bullets) {
+			if (bullet.getShape().getGlobalBounds().findIntersection(tankBody.getGlobalBounds())){
+				Alive = false;
+				break;
+			}
+		}
 	}
 
 	bool BulletBoundColision(Bullet& bullet, const std::unordered_map<sf::Shape*, sf::Vector2f> map) {
@@ -232,7 +255,32 @@ private:
 
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override
 	{
-		target.draw(tankBody, states);
+		sf::Clock explodeClock;
+		sf::Time explodeDuration = sf::seconds(3.f);
+		if (Alive) {
+			sf::CircleShape top(size.x/3);
+			top.setFillColor(sf::Color::Black);
+			sf::RectangleShape barrel({ size.x / 4, size.y / 2 });
+			barrel.setFillColor(sf::Color::Black);
+			barrel.setOrigin({ barrel.getSize().x / 2, barrel.getSize().y });
+			top.setOrigin({ top.getRadius(), top.getRadius() });
+			top.setPosition(tankBody.getPosition());
+			barrel.setPosition(tankBody.getPosition());
+			barrel.setRotation(tankBody.getRotation());
+			target.draw(tankBody, states);
+			target.draw(top, states);
+			target.draw(barrel, states);
+			explodeClock.restart();
+		}
+		else {
+			sf::CircleShape explosion(size.x/2);
+			explosion.setFillColor(sf::Color::Red);
+			explosion.setOrigin({ size.x, size.x });
+			explosion.setPosition(tankBody.getPosition());
+			target.draw(explosion, states);
+			explosion.setRadius(size.x/2 * (explodeClock.getElapsedTime().asSeconds() / explodeDuration.asSeconds()));
+			explosion.setOrigin({ explosion.getRadius(), explosion.getRadius() });
+		}
 	}
 
 };

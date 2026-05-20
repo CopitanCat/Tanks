@@ -9,6 +9,8 @@ private:
 	bool alive = false;
 	int bound_Count = 3;
 	sf::Vector2f size;
+	sf::Clock lifeTimeClock;
+	sf::Time lifeTime;
 
 public:
 	// Constructors
@@ -18,6 +20,7 @@ public:
 		bulletBody.setFillColor(sf::Color::Red);
 		bulletBody.setOrigin({ radius, radius });
 		alive = true;
+		lifeTimeClock.restart();
 	}
 	Bullet(sf::Vector2f coordinates) {
 		this->coordinates = coordinates;
@@ -26,6 +29,7 @@ public:
 		bulletBody.setFillColor(sf::Color::Red);
 		bulletBody.setOrigin({ radius, radius });
 		alive = true;
+		lifeTimeClock.restart();
 	}
 	Bullet(float radius) {
 		this->radius = radius;
@@ -34,6 +38,7 @@ public:
 		bulletBody.setRadius(radius);
 		bulletBody.setFillColor(sf::Color::Red);
 		bulletBody.setOrigin({ radius, radius });
+		lifeTimeClock.restart();
 	}
 	Bullet(sf::Vector2f coordinates, float radius) {
 		this->coordinates = coordinates;
@@ -43,6 +48,7 @@ public:
 		bulletBody.setRadius(radius);
 		bulletBody.setFillColor(sf::Color::Red);
 		bulletBody.setOrigin({ radius, radius });
+		lifeTimeClock.restart();
 	}
 
 
@@ -58,6 +64,10 @@ public:
 
 	void setSize(sf::Vector2f size) {
 		this->size = size;
+	}
+
+	void setLiveTime(sf::Time time) {
+		lifeTime = time;
 	}
 	// Getters
 
@@ -76,6 +86,10 @@ public:
 
 	int getBoundCount() {
 		return bound_Count;
+	}
+
+	sf::CircleShape getShape() {
+		return bulletBody;
 	}
 
 	// Actions
@@ -102,6 +116,9 @@ public:
 			speed * std::cos(angle.asRadians()),
 			speed * std::sin(angle.asRadians()) // was angley
 			});
+		if (lifeTimeClock.getElapsedTime() >= lifeTime) {
+			alive = false;
+		}
 	}
 
 
