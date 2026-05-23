@@ -47,6 +47,8 @@ void main() {
 	player2.setSize_OF_window({ 800, 600 });
 	player2.setMap(Blocks);
 
+	std::vector<Bullet> BulletPool;
+
 	// Variable
 	int speed = 5;
 	sf::Time intervals_BY_SHOOTING = sf::seconds(0.4f);
@@ -66,7 +68,7 @@ void main() {
 	sf::Text bulletCountText(font, "Bullets: " + std::to_string(player.getBulletCount()), 20);
 	sf::Text bulletCountText2(font, "Bullets p2: " + std::to_string(player2.getBulletCount()), 20);
 
-	Buttens startButten({ 600.f, 100.f }, {100.f, 100.f}, (char*)"Play", font, sf::Color::Green);
+	Buttens startButten({ 600.f, 100.f }, { 100.f, 100.f }, (char*)"Play", font, sf::Color::Green);
 	Buttens PlayOnlineButten({ 600.f, 100.f }, { 100.f, 250.f }, (char*)"Play Online", font, sf::Color::Green);
 	Buttens ExitButten({ 600.f, 100.f }, { 100.f, 400.f }, (char*)"Exit", font, sf::Color::Green);
 
@@ -87,96 +89,103 @@ void main() {
 			}
 		}
 
-		// Handle input
-		if (player.isAlive()) {
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
-				player.move(speed);
-			}
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
-				player.move(-speed);
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-				player.rotate(-5);
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-				player.rotate(5);
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !reloading) {
-				if (player.getBulletCount() == 0) {
-					reloadingTimer.restart();
-					reloading = true;
+		window.clear(sf::Color(115, 115, 115, 255));
+		if (isStart) {
+			// Handle input
+			if (player.isAlive()) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
+					player.move(speed);
 				}
-				else if (player.getBulletCount() != 0 &&
-					shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
-					player.shoot();
-					shootingTimer2.restart();
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
+					player.move(-speed);
+				}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+					player.rotate(-5);
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+					player.rotate(5);
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !reloading) {
+					if (player.getBulletCount() == 0) {
+						reloadingTimer.restart();
+						reloading = true;
+					}
+					else if (player.getBulletCount() != 0 &&
+						shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
+						player.shoot();
+						shootingTimer2.restart();
+					}
 				}
 			}
-		}
 
-		// Player2 controlers
-		if (player2InGame && player2.isAlive()) {
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
-				player2.move(speed);
-			}
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
-				player2.move(-speed);
-			}
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-				player2.rotate(-5);
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-				player2.rotate(5);
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter) && !player2_Reloading) {
-				if (player2.getBulletCount() == 0) {
-					reloadingTimer2.restart();
-					player2_Reloading = true;
+			// Player2 controlers
+			if (player2InGame && player2.isAlive()) {
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
+					player2.move(speed);
 				}
-				else if (player2.getBulletCount() != 0 &&
-					shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
-					player2.shoot();
-					shootingTimer2.restart();
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
+					player2.move(-speed);
 				}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+					player2.rotate(-5);
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+					player2.rotate(5);
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter) && !player2_Reloading) {
+					if (player2.getBulletCount() == 0) {
+						reloadingTimer2.restart();
+						player2_Reloading = true;
+					}
+					else if (player2.getBulletCount() != 0 &&
+						shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
+						player2.shoot();
+						shootingTimer2.restart();
+					}
+				}
+				if (player2_Reloading && reloadingTimer2.getElapsedTime() <= intervals_BY_RELOADING)
+				{
+					bulletCountText2.setString("Reloading..." + std::to_string((int)(4 - reloadingTimer2.getElapsedTime().asSeconds())));
+
+				}
+				else
+				{
+					bulletCountText2.setString("Bullets p2: " + std::to_string(player2.getBulletCount()));
+					reloadingTimer2.stop();
+				}
+				if (player2_Reloading && reloadingTimer2.getElapsedTime() > intervals_BY_RELOADING)
+				{
+					player2.reload();
+					player2_Reloading = false;
+				}
+
+
 			}
-			if (player2_Reloading && reloadingTimer2.getElapsedTime() <= intervals_BY_RELOADING)
+
+			if (reloading && reloadingTimer.getElapsedTime() <= intervals_BY_RELOADING)
 			{
-				bulletCountText2.setString("Reloading..." + std::to_string((int)(4 - reloadingTimer2.getElapsedTime().asSeconds())));
+				bulletCountText.setString("Reloading..." + std::to_string((int)(4 - reloadingTimer.getElapsedTime().asSeconds())));
 
 			}
 			else
 			{
-				bulletCountText2.setString("Bullets p2: " + std::to_string(player2.getBulletCount()));
-				reloadingTimer2.stop();
+				bulletCountText.setString("Bullets: " + std::to_string(player.getBulletCount()));
+				reloadingTimer.stop();
 			}
-			if (player2_Reloading && reloadingTimer2.getElapsedTime() > intervals_BY_RELOADING)
+			if (reloading && reloadingTimer.getElapsedTime() > intervals_BY_RELOADING)
 			{
-				player2.reload();
-				player2_Reloading = false;
+				player.reload();
+				reloading = false;
 			}
 
+			player.updateBullets(speed);
 			player2.updateBullets(speed);
-			player2.collisionWithBullet(player.getBullets());
+			for (Bullet b : player.getBullets()) {
+				BulletPool.push_back(b);
+			}
 
-		}
+			for (Bullet b : player2.getBullets()) {
+				BulletPool.push_back(b);
+			}
+			player.collisionWithBullet(BulletPool);
+			player2.collisionWithBullet(BulletPool);
 
-		if (reloading && reloadingTimer.getElapsedTime() <= intervals_BY_RELOADING)
-		{
-			bulletCountText.setString("Reloading..." + std::to_string((int)(4 - reloadingTimer.getElapsedTime().asSeconds())));
-
-		}
-		else
-		{
-			bulletCountText.setString("Bullets: " + std::to_string(player.getBulletCount()));
-			reloadingTimer.stop();
-		}
-		if (reloading && reloadingTimer.getElapsedTime() > intervals_BY_RELOADING)
-		{
-			player.reload();
-			reloading = false;
-		}
-
-		player.updateBullets(speed);
-		player.collisionWithBullet(player2.getBullets());
-
-		window.clear(sf::Color(115, 115, 115, 255));
-		if (isStart) {
 			window.draw(player);
 			if (player2InGame) {
 				window.draw(player2);
@@ -208,5 +217,6 @@ void main() {
 			}
 		}
 		window.display();
+		BulletPool.clear();
 	} // End of game loop
 }

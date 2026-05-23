@@ -171,7 +171,7 @@ public:
 	// Actions
 	void move(float speed) {
 		if (checkCollision()) {
-			tankBody.setPosition({lastPosition.x +(speed/abs(speed)) * tankBody.getOrigin().x * std::cos((sf::degrees(180)-angle).asRadians()), lastPosition.y + (speed/abs(speed)) * tankBody.getOrigin().y * std::sin(-angle.asRadians()) });
+			tankBody.move({ -speed * std::cos(angle.asRadians()), -speed * std::sin(angle.asRadians())});
 		}
 		else {
 			tankBody.move({ speed * std::cos(angle.asRadians()), speed * std::sin(angle.asRadians()) });
@@ -188,7 +188,7 @@ public:
 	void shoot() {
 		coordinates = tankBody.getPosition();
 		if (bulletCount > 0) {
-			bullets.push_back(Bullet({coordinates.x + cos(angle.asRadians())*(size.x/1.5f), coordinates.y + sin(angle.asRadians())*(size.y/1.5f)}));
+			bullets.push_back(Bullet({coordinates.x + cos(angle.asRadians())*((size.x)+8), coordinates.y + sin(angle.asRadians())*((size.y)+8)}));
 			bullets.back().setAngle(angle);
 			bullets.back().setLiveTime(BulletDuration);
 			bulletCount--;
