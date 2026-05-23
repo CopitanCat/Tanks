@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include "Tank.cpp"
 #include <unordered_map>
+#include "Buttens.cpp"
+
 
 sf::Shape* createWall(sf::Shape* shape, sf::Vector2f coordinate) {
 	shape->setPosition(coordinate);
@@ -33,9 +35,6 @@ void main() {
 	Blocks[createWall(new sf::RectangleShape({ 10, 80 }), { 780, 490 })] = { 10, 20 };
 	Blocks[createWall(new sf::RectangleShape({ 10, 80 }), { 180, 390 })] = { 10, 20 };
 
-
-
-
 	// Create a tank object
 	Tank player = Tank({ 400,300 });
 	player.setBullets(5);
@@ -59,12 +58,17 @@ void main() {
 	bool reloading = false;
 	bool player2InGame = false;
 	bool player2_Reloading = false;
+	bool isStart = false;
 
 	// Fonts and text
 	sf::Font font("C:/Windows/Fonts/Arial.ttf");
 
 	sf::Text bulletCountText(font, "Bullets: " + std::to_string(player.getBulletCount()), 20);
 	sf::Text bulletCountText2(font, "Bullets p2: " + std::to_string(player2.getBulletCount()), 20);
+
+	Buttens startButten({ 600.f, 100.f }, {100.f, 100.f}, (char*)"Play", font, sf::Color::Green);
+	Buttens PlayOnlineButten({ 600.f, 100.f }, { 100.f, 250.f }, (char*)"Play Online", font, sf::Color::Green);
+	Buttens ExitButten({ 600.f, 100.f }, { 100.f, 400.f }, (char*)"Exit", font, sf::Color::Green);
 
 	bulletCountText2.setPosition({ 600, 0 });
 	// Start the game loop
@@ -84,28 +88,32 @@ void main() {
 		}
 
 		// Handle input
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
-			player.move(speed);
-		}
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
-			player.move(-speed);
-		}
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-			player.rotate(-5);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-			player.rotate(5);
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !reloading) {
-			if (player.getBulletCount() == 0) {
-				reloadingTimer.restart();
-				reloading = true;
+		if (player.isAlive()) {
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) {
+				player.move(speed);
 			}
-			else if (player.getBulletCount() != 0 &&
-				shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
-				player.shoot();
-				shootingTimer2.restart();
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) {
+				player.move(-speed);
+			}
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+				player.rotate(-5);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+				player.rotate(5);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !reloading) {
+				if (player.getBulletCount() == 0) {
+					reloadingTimer.restart();
+					reloading = true;
+				}
+				else if (player.getBulletCount() != 0 &&
+					shootingTimer2.getElapsedTime() >= intervals_BY_SHOOTING) {
+					player.shoot();
+					shootingTimer2.restart();
+				}
 			}
 		}
-		if (player2InGame) {
+
+		// Player2 controlers
+		if (player2InGame && player2.isAlive()) {
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
 				player2.move(speed);
 			}
@@ -168,21 +176,37 @@ void main() {
 		player.collisionWithBullet(player2.getBullets());
 
 		window.clear(sf::Color(115, 115, 115, 255));
-		window.draw(player);
-		if (player2InGame) {
-			window.draw(player2);
-			for (const auto& bullet : player2.getBullets()) {
+		if (isStart) {
+			window.draw(player);
+			if (player2InGame) {
+				window.draw(player2);
+				for (const auto& bullet : player2.getBullets()) {
+					window.draw(bullet);
+				}
+				window.draw(bulletCountText2);
+			}
+			for (const auto& bullet : player.getBullets()) {
 				window.draw(bullet);
 			}
-			window.draw(bulletCountText2);
+			for (const auto& pair : Blocks) {
+				window.draw(*pair.first);
+			}
+			window.draw(bulletCountText);
 		}
-		for (const auto& bullet : player.getBullets()) {
-			window.draw(bullet);
+		else {
+			window.draw(startButten);
+			window.draw(PlayOnlineButten);
+			window.draw(ExitButten);
+			if (startButten.click((sf::Vector2f)sf::Mouse::getPosition(window), sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))) {
+				isStart = true;
+			}
+			else if (PlayOnlineButten.click((sf::Vector2f)sf::Mouse::getPosition(window), sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))) {
+				// Online play functionality can be implemented here
+			}
+			else if (ExitButten.click((sf::Vector2f)sf::Mouse::getPosition(window), sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))) {
+				window.close();
+			}
 		}
-		for (const auto& pair : Blocks) {
-			window.draw(*pair.first);
-		}
-		window.draw(bulletCountText);
 		window.display();
 	} // End of game loop
 }

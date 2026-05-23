@@ -12,7 +12,6 @@ private:
 	sf::Angle angle = tankBody.getRotation()- sf::degrees(90);
 	std::vector<Bullet> bullets;
 	int bulletCount = 0;
-	bool isAlive = true;
 	std::unordered_map<sf::Shape*, sf::Vector2f> Map;
 	sf::Vector2f lastPosition;
 	sf::Time BulletDuration = sf::seconds(5.f);
@@ -165,6 +164,9 @@ public:
 		return bulletCount;
 	}
 
+	bool isAlive() {
+		return Alive;
+	}
 
 	// Actions
 	void move(float speed) {
